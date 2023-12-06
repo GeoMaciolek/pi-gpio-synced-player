@@ -30,7 +30,7 @@ osd_enabled = True
 
 # What GPIO pins are used for the main/secondary communication
 gpio_listen_pin = 4     # note - 3 has internal pull-up resistor, 4 has pull-down resistor
-gpio_transmit_pin = 2
+gpio_transmit_pins = [17,27,22] # set as a list - can have only one member, though, if only one needed
 
 # delay after initial load command before pause  
 load_wait_duration = 2
@@ -74,10 +74,8 @@ offset_duration = 4
 loop_duration =(3600 * length_hours) +(60 * length_minutes) + length_seconds
 
 
-# Intialize pi GPIO pins
+# Intialize pi GPIO
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
-GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
 
 print(f'{ver} in mode: {mode}')
 
@@ -86,6 +84,8 @@ count = 0
 if mode == 'primary':
 
     print('++++ Loading ++++')
+    for gpio_transmit_pin in gpio_transmit_pins:
+        GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
     print('Note: to terminate prematurely, hit [q] in the video player, and Control-C at the text screen')
     time.sleep(2)
 
@@ -111,13 +111,15 @@ if mode == 'primary':
     # Begin standard playback loop
     while (count <= playback_count) or play_forever:
                                                                     
-        # Pin2 to high - 2nd trigger
-        GPIO.output(gpio_transmit_pin, GPIO.HIGH)
+        # Pins to high - 2nd trigger
+        for gpio_transmit_pin in gpio_transmit_pins:
+            GPIO.output(gpio_transmit_pin, GPIO.HIGH)
 
         vid_pauseplay() # Start Playback
 
         # Pin2 to low (will include the [1 sec] delay of keypress
-        GPIO.output(gpio_transmit_pin, GPIO.LOW)
+        for gpio_transmit_pin in gpio_transmit_pins:
+            GPIO.output(gpio_transmit_pin, GPIO.LOW)
 
         time.sleep(loop_duration)
 
@@ -131,6 +133,8 @@ if mode == 'primary':
 
 # Otherwise, run as secondary
 elif mode == 'secondary':
+    # Set up listening pin
+    GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
     # Initialize (load, reset to start)
     print("os.popen(omx_cmd)                          # LOAD file")
 
