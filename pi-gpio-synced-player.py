@@ -136,7 +136,7 @@ elif mode == 'secondary':
     # Set up listening pin
     GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
     # Initialize (load, reset to start)
-    print("os.popen(omx_cmd)                          # LOAD file")
+    os.popen(omx_cmd)                          # LOAD file
 
     # Wait for file to load / buffer
     time.sleep(load_wait_duration - 1)      # [5 - 1] sec
