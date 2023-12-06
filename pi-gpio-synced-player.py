@@ -1,4 +1,4 @@
-ver = 'PYTHON 3 - Master/slave with pause rew play, no-osd.'
+ver = 'pi-gpio-synced-player.py 0.2 - with pause rew play, no-osd.'
 
 import RPi.GPIO as GPIO
 import time
