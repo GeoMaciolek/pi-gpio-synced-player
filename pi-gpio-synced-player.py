@@ -19,7 +19,7 @@ media_file = 'your_media_file.mp4'
 # mfile = 'bbb.mp4'
 
 # Loop forever? Except for testing, set to: True 
-play_forever = False
+play_forever = True
 
 # For testing - playback loop count
 playback_count = 3
