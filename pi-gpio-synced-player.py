@@ -5,6 +5,10 @@ import time
 import os
 import keyboard
 
+if not TEST_MODE:
+    import RPi.GPIO as GPIO
+
+
 ############################
 ### Application Settings ###
 
