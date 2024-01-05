@@ -11,8 +11,11 @@ import keyboard
 # Set to "primary" for main / controller, or "secondary" for the listener units
 mode = 'secondary'
 
+# Set to True to skip GPIO etc - for testing NOT on a pi
+TEST_MODE = True
+
 # Filename to play
-mfile = 'trim2.mp4'
+mfile = 'bbb.mp4'
 
 # File Length - set to 0 if not used!
 length_hours = 0
@@ -67,6 +70,57 @@ def vid_reset_to_start():
     time.sleep(2)
     vid_rewind()
 
+def wait_for_gpio():
+    if TEST_MODE:
+        print('Waiting for a rising pin.')
+        time.sleep(5)
+        print('We got a rising pin!')
+    else:
+        print('Waiting for a rising pin.')
+        GPIO.wait_for_edge(gpio_listen_pin, GPIO.RISING)
+        print('We got a rising pin!') 
+
+def gpio_setup_transmit_pins():
+    # Set up the pins for the main/secondary communication
+    if not TEST_MODE:
+        for gpio_transmit_pin in gpio_transmit_pins:
+            GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
+    else:
+        print("[TEST MODE] We would be initing the GPIO pins.")
+
+
+def gpio_initialize():
+    if not TEST_MODE:
+        GPIO.setmode(GPIO.BCM)
+    else:
+        print("[TEST MODE] We would be setting the GPIO mode.")
+
+def gpio_close():
+    if not TEST_MODE:
+        GPIO.cleanup()
+    else:
+        print("[TEST MODE] We would be closing the GPIO pins.")
+
+def gpio_send_pin_high():
+    if not TEST_MODE:
+        for gpio_transmit_pin in gpio_transmit_pins:
+            GPIO.output(gpio_transmit_pin, GPIO.HIGH)
+    else:
+        print("[TEST MODE] We would be setting the GPIO pins high.")
+
+def gpio_send_pin_low():
+    if not TEST_MODE:
+        for gpio_transmit_pin in gpio_transmit_pins:
+            GPIO.output(gpio_transmit_pin, GPIO.LOW)
+    else:
+        print("[TEST MODE] We would be setting the GPIO pins low.")
+
+def setup_gpio_listenpin():
+    if not TEST_MODE:
+        # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
+    else:
+        print("[TEST MODE] We would be setting up the GPIO listen pin.")
 
 # Calculate loop time
 # Loop time(in seconds) - set to length of file + 5
@@ -75,7 +129,7 @@ loop_duration =(3600 * length_hours) +(60 * length_minutes) + length_seconds
 
 
 # Intialize pi GPIO
-GPIO.setmode(GPIO.BCM)
+gpio_initialize()
 
 print(f'{ver} in mode: {mode}')
 
@@ -84,8 +138,7 @@ count = 0
 if mode == 'primary':
 
     print('++++ Loading ++++')
-    for gpio_transmit_pin in gpio_transmit_pins:
-        GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
+    gpio_setup_transmit_pins()
     print('Note: to terminate prematurely, hit [q] in the video player, and Control-C at the text screen')
     time.sleep(2)
 
@@ -112,14 +165,12 @@ if mode == 'primary':
     while (count <= playback_count) or play_forever:
                                                                     
         # Pins to high - 2nd trigger
-        for gpio_transmit_pin in gpio_transmit_pins:
-            GPIO.output(gpio_transmit_pin, GPIO.HIGH)
+        gpio_send_pin_high()
 
         vid_pauseplay() # Start Playback
 
-        # Pin2 to low (will include the [1 sec] delay of keypress
-        for gpio_transmit_pin in gpio_transmit_pins:
-            GPIO.output(gpio_transmit_pin, GPIO.LOW)
+        # Pins to low (will include the [1 sec] delay of keypress
+        gpio_send_pin_low()
 
         time.sleep(loop_duration)
 
@@ -128,13 +179,13 @@ if mode == 'primary':
         count += 1
 
     # Cleanup pins(during testing etc)
-    GPIO.cleanup()
+    gpio_close()
     vid_quit()
 
 # Otherwise, run as secondary
 elif mode == 'secondary':
     # Set up listening pin
-    GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
+    setup_gpio_listenpin()
     # Initialize (load, reset to start)
     os.popen(omx_cmd)                          # LOAD file
 
@@ -152,7 +203,7 @@ elif mode == 'secondary':
 
         print('Waiting for a rising pin.')
         # Wait for RISE (GPIO going High on Main)
-        GPIO.wait_for_edge(gpio_listen_pin, GPIO.RISING)                        # Detect RISE
+        wait_for_gpio()
         print('We got a rising pin!') 
         vid_pauseplay()
 
@@ -161,7 +212,8 @@ elif mode == 'secondary':
 
         # Jump to beinning to wait for pin/start.
         vid_reset_to_start()
-    GPIO.cleanup()
+
+    gpio_close()
     vid_quit()
 
 else:
@@ -169,6 +221,3 @@ else:
 
 print('++++ End ++++')
 print('Note: if keyboard is not working, hit Control-C, then type "reset" and hit enter')
-
-
-
