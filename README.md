@@ -36,8 +36,4 @@ sudo pip3 install pympv
 Set the options in the file as needed - particularly `mode = 'primary'` or `mode = 'secondary'`
 and `media_file = 'your_media_file.mp4'`
 
-# Filename to play
-mfile = 'your_media_file.mp4'
-Edit the file, etc,  etc.
-(TODO)
-
+(TODO - fill in more details here)
