@@ -1,30 +1,22 @@
 ver = 'pi-gpio-synced-player.py 0.2 - with pause rew play, no-osd.'
 
-import RPi.GPIO as GPIO
 import time
-import os
-import keyboard
+import mpv
 
-if not TEST_MODE:
-    import RPi.GPIO as GPIO
-
+# Set to True to skip GPIO etc - for testing NOT on a pi
+TEST_MODE = True
 
 ############################
 ### Application Settings ###
 
 # Set to "primary" for main / controller, or "secondary" for the listener units
-mode = 'secondary'
-
-# Set to True to skip GPIO etc - for testing NOT on a pi
-TEST_MODE = True
+mode = 'primary'
 
 # Filename to play
-mfile = 'bbb.mp4'
-
-# File Length - set to 0 if not used!
-length_hours = 0
-length_minutes = 0
-length_seconds = 20
+mfile = 'your_media_file.mp4'
+# Other examples:
+# mfile = 'rem/synctest2.mp4'
+# mfile = 'bbb.mp4'
 
 # Loop forever? Except for testing, set to: True 
 play_forever = False
@@ -41,7 +33,9 @@ gpio_transmit_pins = [17,27,22] # set as a list - can have only one member, thou
 
 # delay after initial load command before pause  
 load_wait_duration = 2
-keyboard_pause_duration = 0.5     # delay between trigger highs / lows
+
+if not TEST_MODE:
+    import RPi.GPIO as GPIO
 
 # Set the omx command line options
 #   note: --loop is enabled to avoid having to reload
@@ -55,28 +49,19 @@ else:
 ### End Application Settings ###
 ################################
 
-def send_key(key: str):
-    keyboard.send(key)                  # Pause
-    time.sleep(keyboard_pause_duration) # ... key wait [0.5] sec ...
-
 def vid_pauseplay():
-    send_key(" ")
+    print('send_key(" ")')
 
 def vid_rewind():
-    send_key("i")
+    print('send_key("i")')
 
 def vid_quit():
-    send_key("q")
+    print('send_key("q")')
 
 # Reset to start - assumes video is playing, and leaves it paused after
-def vid_reset_to_start():
-    vid_pauseplay()
-    time.sleep(2)
-    vid_rewind()
-
 def wait_for_gpio():
     if TEST_MODE:
-        print('Waiting for a rising pin.')
+        print('[TEST MODE] Waiting for a rising pin (just sleep 5).')
         time.sleep(5)
         print('We got a rising pin!')
     else:
@@ -119,17 +104,65 @@ def gpio_send_pin_low():
     else:
         print("[TEST MODE] We would be setting the GPIO pins low.")
 
-def setup_gpio_listenpin():
+def setup_gpio_listen_pin():
     if not TEST_MODE:
         # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
     else:
         print("[TEST MODE] We would be setting up the GPIO listen pin.")
 
-# Calculate loop time
-# Loop time(in seconds) - set to length of file + 5
-offset_duration = 4
-loop_duration =(3600 * length_hours) +(60 * length_minutes) + length_seconds
+def player_launch():
+    """launch the media player
+
+    Returns:
+        mpv.Context: the player context
+    """
+    try:
+        player = mpv.Context()
+    except mpv.MPVError:
+        print('failed creating context')
+        return 1
+    
+    player.set_option('input-default-bindings')
+    player.set_option('osc')
+    player.set_option('input-vo-keyboard')
+    player.set_option('loop', 'yes')
+    player.set_option('pause') # start playback paused
+    player.initialize()
+
+    return player
+
+def player_open_file(player, input_file):
+    print(f'player.play({input_file})')
+    player.command('loadfile', input_file)
+
+def player_reset_to_start(player):
+    print('Resetting to start')
+    player.set_option('pause', 'yes')
+    player.command('seek','0','absolute')
+
+def player_resume(player):
+    print('Resuming playback')
+    player.set_option('pause', 'no')
+
+def player_start_at_beginning(player):
+    print("Starting playback at beginning: player_reset_to_start(), then player_resume()")
+    player_reset_to_start(player=player)
+    player_resume(player=player)
+
+def player_wait_for_end(player):
+    print('Waiting...')
+    while player.get_property('time-pos') < (player.get_property('duration')-0.3):
+        time.sleep(0.1)
+        # print(player.get_property('time-pos'))
+
+    # while True:
+        # event = player.wait_event(.01)
+        # if event.id == mpv.Events.none:
+        #     continue
+        # print(f"mpv event: {event.name}")
+        # if event.id in [mpv.Events.end_file, mpv.Events.shutdown]:
+        #     return True
 
 
 # Intialize pi GPIO
@@ -150,35 +183,26 @@ if mode == 'primary':
 #    GPIO.output(gpio_transmit_pin, GPIO.HIGH)
 #
     # Load file
-    os.popen(omx_cmd)
+    player = player_launch()
+    player_open_file(player=player, input_file=mfile)
 
     # Wait for file to load / buffer
     time.sleep(load_wait_duration)      # [5] sec
     
-    vid_pauseplay() 
-    vid_reset_to_start()
-    time.sleep(2)
-
-#            # (total wait time from above w/pin HIGH: 6 sec [load_wait_duration + keyboard_pause_duration])
-#
-#    # Set Pin 2 to low(off)
-#    GPIO.output(gpio_transmit_pin, GPIO.LOW)
-#    time.sleep(keyboard_pause_duration+1)
-
     # Begin standard playback loop
     while (count <= playback_count) or play_forever:
                                                                     
         # Pins to high - 2nd trigger
         gpio_send_pin_high()
 
-        vid_pauseplay() # Start Playback
+        player_start_at_beginning(player=player)
 
         # Pins to low (will include the [1 sec] delay of keypress
         gpio_send_pin_low()
 
-        time.sleep(loop_duration)
-
-        vid_reset_to_start()
+        print('Waiting for the end of the video...')
+        player_wait_for_end(player=player)
+        print('Video has ended!')
 
         count += 1
 
@@ -189,33 +213,22 @@ if mode == 'primary':
 # Otherwise, run as secondary
 elif mode == 'secondary':
     # Set up listening pin
-    setup_gpio_listenpin()
+    setup_gpio_listen_pin()
     # Initialize (load, reset to start)
-    os.popen(omx_cmd)                          # LOAD file
+    player = player_launch()
+    player_open_file(player=player, input_file=mfile)
 
     # Wait for file to load / buffer
     time.sleep(load_wait_duration - 1)      # [5 - 1] sec
-    
-    vid_pauseplay()
-    vid_reset_to_start()
-    time.sleep(1)
 
-    print('++++ Waiting for start ++++')
+
+    print('++++ Prepared to start ++++')
 
     # Begin standard playback loop
     while (count <= playback_count) or play_forever:
-
-        print('Waiting for a rising pin.')
         # Wait for RISE (GPIO going High on Main)
         wait_for_gpio()
-        print('We got a rising pin!') 
-        vid_pauseplay()
-
-        # Wait for loop to finish before allowing video to restart
-        time.sleep(loop_duration)
-
-        # Jump to beinning to wait for pin/start.
-        vid_reset_to_start()
+        player_start_at_beginning(player=player)
 
     gpio_close()
     vid_quit()
