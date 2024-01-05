@@ -12,16 +12,32 @@ likely won't be broadly useful!
 
 ## Details
 
-This script uses the `omxplayer` (deprecated as of 2023) and the `keyboard`
-Python module ("pressing keys" in the player) in tandem with simple GPIO
-communications to ensure players start in sync.
+This script uses the `mpv` player, and the `pympv` Python module (for playback
+control), with simple GPIO communications to ensure players start in sync.
 
 ## Wiring
 
 ![Pi 3B GPIO Pinout](pinout.png)
 
-## Usage 
+## Usage
 
+### Setup
+
+#### Install mpv and pympv on each Pi
+
+```bash
+sudo apt update
+sudo apt install mpv libmpv1 libmpv-dev python3-pip
+sudo pip3 install pympv
+```
+
+#### Edit the file
+
+Set the options in the file as needed - particularly `mode = 'primary'` or `mode = 'secondary'`
+and `media_file = 'your_media_file.mp4'`
+
+# Filename to play
+mfile = 'your_media_file.mp4'
 Edit the file, etc,  etc.
 (TODO)
 

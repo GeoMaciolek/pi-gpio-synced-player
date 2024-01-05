@@ -1,10 +1,10 @@
-ver = 'pi-gpio-synced-player.py 0.2 - with pause rew play, no-osd.'
+ver = 'pi-gpio-synced-player.py 0.5 - mpv edition'
 
 import time
 import mpv
 
 # Set to True to skip GPIO etc - for testing NOT on a pi
-TEST_MODE = True
+TEST_MODE = False
 
 ############################
 ### Application Settings ###
@@ -13,7 +13,7 @@ TEST_MODE = True
 mode = 'primary'
 
 # Filename to play
-mfile = 'your_media_file.mp4'
+media_file = 'your_media_file.mp4'
 # Other examples:
 # mfile = 'rem/synctest2.mp4'
 # mfile = 'bbb.mp4'
@@ -36,14 +36,6 @@ load_wait_duration = 2
 
 if not TEST_MODE:
     import RPi.GPIO as GPIO
-
-# Set the omx command line options
-#   note: --loop is enabled to avoid having to reload
-#   the file, but is NOT itself timing-accurate!
-if osd_enabled:
-     omx_cmd = 'omxplayer --loop ' + mfile
-else:
-    omx_cmd = 'omxplayer --loop --no-osd ' + mfile
 
 
 ### End Application Settings ###
@@ -124,7 +116,8 @@ def player_launch():
         return 1
     
     player.set_option('input-default-bindings')
-    player.set_option('osc')
+    if osd_enabled:
+        player.set_option('osc')
     player.set_option('input-vo-keyboard')
     player.set_option('loop', 'yes')
     player.set_option('pause') # start playback paused
@@ -184,7 +177,7 @@ if mode == 'primary':
 #
     # Load file
     player = player_launch()
-    player_open_file(player=player, input_file=mfile)
+    player_open_file(player=player, input_file=media_file)
 
     # Wait for file to load / buffer
     time.sleep(load_wait_duration)      # [5] sec
@@ -216,7 +209,7 @@ elif mode == 'secondary':
     setup_gpio_listen_pin()
     # Initialize (load, reset to start)
     player = player_launch()
-    player_open_file(player=player, input_file=mfile)
+    player_open_file(player=player, input_file=media_file)
 
     # Wait for file to load / buffer
     time.sleep(load_wait_duration - 1)      # [5 - 1] sec
