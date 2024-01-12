@@ -1,4 +1,4 @@
-ver = 'pi-gpio-synced-player.py 0.6 - vlc edition'
+ver = 'pi-gpio-synced-player.py 0.6.1 - vlc edition'
 
 import time
 import vlc
@@ -6,7 +6,10 @@ import vlc
 from datetime import datetime
 
 # Set to True to skip GPIO etc - for testing NOT on a pi
-TEST_MODE = False
+TEST_MODE_FAKE_GPIO = False
+
+# Set to True to run in fullscreen mode
+FULLSCREEN_MODE = True
 
 ############################
 ### Application Settings ###
@@ -36,7 +39,7 @@ gpio_transmit_pins = [17,27,22] # set as a list - can have only one member, thou
 # delay after initial load command before pause  
 load_wait_duration = 2
 
-if not TEST_MODE:
+if not TEST_MODE_FAKE_GPIO:
     import RPi.GPIO as GPIO
 
 
@@ -52,7 +55,7 @@ def vid_quit(vlc_player):
 
 # Reset to start - assumes video is playing, and leaves it paused after
 def wait_for_gpio():
-    if TEST_MODE:
+    if TEST_MODE_FAKE_GPIO:
         print('[TEST MODE] Waiting for a rising pin (just sleep 5).')
         time.sleep(5)
         print(f'{timestamp()} - We got (fake) rising pin!')
@@ -63,42 +66,48 @@ def wait_for_gpio():
 
 def gpio_setup_transmit_pins():
     # Set up the pins for the main/secondary communication
-    if not TEST_MODE:
+    if not TEST_MODE_FAKE_GPIO:
         for gpio_transmit_pin in gpio_transmit_pins:
+            print(f"Setting up pin {gpio_transmit_pin} as output, default to LOW")
             GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
     else:
         print("[TEST MODE] We would be initing the GPIO pins.")
 
 
 def gpio_initialize():
-    if not TEST_MODE:
+    if not TEST_MODE_FAKE_GPIO:
+        print("Setting up GPIO interface")
         GPIO.setmode(GPIO.BCM)
     else:
         print("[TEST MODE] We would be setting the GPIO mode.")
 
 def gpio_close():
-    if not TEST_MODE:
+    if not TEST_MODE_FAKE_GPIO:
+        print("Closing GPIO interface")
         GPIO.cleanup()
     else:
         print("[TEST MODE] We would be closing the GPIO pins.")
 
 def gpio_send_pin_high():
-    if not TEST_MODE:
+    if not TEST_MODE_FAKE_GPIO:
         for gpio_transmit_pin in gpio_transmit_pins:
+            print("Setting pin {gpio_transmit_pin} to HIGH")
             GPIO.output(gpio_transmit_pin, GPIO.HIGH)
     else:
         print(f"{timestamp()} - [TEST MODE] We would be setting the GPIO pins high.")
 
 def gpio_send_pin_low():
-    if not TEST_MODE:
+    if not TEST_MODE_FAKE_GPIO:
         for gpio_transmit_pin in gpio_transmit_pins:
+            print("Setting pin {gpio_transmit_pin} to LOW")
             GPIO.output(gpio_transmit_pin, GPIO.LOW)
     else:
         print(f"{timestamp()} - [TEST MODE] We would be setting the GPIO pins low.")
 
 def setup_gpio_listen_pin():
-    if not TEST_MODE:
+    if not TEST_MODE_FAKE_GPIO:
         # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        print(f"Setting up pin {gpio_listen_pin} as input, with pull-down resistor enabled")
         GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
     else:
         print("[TEST MODE] We would be setting up the GPIO listen pin.")
@@ -129,7 +138,8 @@ def player_launch(media_file:str, set_playback_count=1) -> (vlc.MediaPlayer, vlc
         print(e)
         return 1
     
-    vlc_player.set_fullscreen(1)
+    if FULLSCREEN_MODE:
+        vlc_player.set_fullscreen(1)
 
     # Play a little bit to get the duratioN!    
     vlc_player.play()
@@ -287,3 +297,5 @@ else:
 
 print('++++ End ++++')
 print('Note: if keyboard is not working, hit Control-C, then type "reset" and hit enter')
+
+player_wait_for_end
