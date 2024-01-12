@@ -64,8 +64,11 @@ def dprint(msg: str = None):
     Args:
         msg (str): The message to print (optional)
     """
-    # print(f'{inspect.stack()[1][3]}(): {msg}')
-    debug_msg = f'[{timestamp()} {MODE[:3]}] {inspect.stack()[1].function}()'
+    module_name = str(inspect.stack()[1][3])
+    # module_name = str(inspect.stack()[1].function)
+    if module_name == '<module>':
+        module_name = 'MAIN'
+    debug_msg = f'[{timestamp()} {MODE[:3]}] {module_name}()'
     if msg:
         debug_msg += f': {msg}'
 
