@@ -27,14 +27,14 @@ TEST_MODE_FAKE_GPIO = False
 FULLSCREEN_MODE = False
 
 # Loop forever? Except for testing, set to: True 
-play_forever = True
+PLAY_FOREVER = True
 
 # For testing - playback loop count
-playback_count = 3
+PLAYBACK_COUNT_DEFAULT = 3
 
 # What GPIO pins are used for the main/secondary communication
-gpio_listen_pin = 4     # note - 3 has internal pull-up resistor, 4 has pull-down resistor
-gpio_transmit_pins = [17,27,22] # set as a list - can have only one member, though, if only one needed
+GPIO_LISTEN_PIN = 4     # note - 3 has internal pull-up resistor, 4 has pull-down resistor
+GPIO_TRANSMIT_PINS = [17,27,22] # set as a list - can have only one member, though, if only one needed
 
 # How long to let the media play after initially loading the file (to get the duration.) Minimum of 0.5 recommended
 PLAYBACK_AFTER_LOAD_DURATION_SEC: float = 0.5 
@@ -43,7 +43,7 @@ PLAYBACK_AFTER_LOAD_DURATION_SEC: float = 0.5
 PIN_TX_DURATION_SEC: float = 0.5
 
 # delay (in seconds) after initial load command before pause. MUST BE AT LEAST 1 SECOND!
-load_wait_duration = 2
+LOAD_WAIT_DURATION = 2
 
 # On-screen Time/playback Display Enabled? Normally set: False
 osd_enabled = True
@@ -89,7 +89,7 @@ def vid_quit(vlc_player, instance):
     dprint('Player and Instance have been released; exiting vid_quit()')
 
 # Reset to start - assumes video is playing, and leaves it paused after
-def wait_for_gpio(gpio_listen_pin: int = gpio_listen_pin, debug_mode_sleep_sec: int = 6):
+def wait_for_gpio(gpio_listen_pin: int = GPIO_LISTEN_PIN, debug_mode_sleep_sec: int = 6):
     """Waits for a GPIO pin to go high (rising edge)
 
     Args:
@@ -108,7 +108,7 @@ def wait_for_gpio(gpio_listen_pin: int = gpio_listen_pin, debug_mode_sleep_sec: 
 def gpio_setup_transmit_pins():
     # Set up the pins for the main/secondary communication
     if not TEST_MODE_FAKE_GPIO:
-        for gpio_transmit_pin in gpio_transmit_pins:
+        for gpio_transmit_pin in GPIO_TRANSMIT_PINS:
             dprint(f"setting up pin {gpio_transmit_pin} as output, default to LOW")
             GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
     else:
@@ -131,7 +131,7 @@ def gpio_close():
 
 def gpio_send_pin_high():
     if not TEST_MODE_FAKE_GPIO:
-        for gpio_transmit_pin in gpio_transmit_pins:
+        for gpio_transmit_pin in GPIO_TRANSMIT_PINS:
             dprint(f"Set pin {gpio_transmit_pin} to HIGH")
             GPIO.output(gpio_transmit_pin, GPIO.HIGH)
     else:
@@ -139,7 +139,7 @@ def gpio_send_pin_high():
 
 def gpio_send_pin_low():
     if not TEST_MODE_FAKE_GPIO:
-        for gpio_transmit_pin in gpio_transmit_pins:
+        for gpio_transmit_pin in GPIO_TRANSMIT_PINS:
             dprint("Setting pin {gpio_transmit_pin} to LOW")
             GPIO.output(gpio_transmit_pin, GPIO.LOW)
     else:
@@ -148,8 +148,8 @@ def gpio_send_pin_low():
 def setup_gpio_listen_pin():
     if not TEST_MODE_FAKE_GPIO:
         # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        dprint(f"Setting up pin {gpio_listen_pin} as input, with pull-down resistor enabled")
-        GPIO.setup(gpio_listen_pin, GPIO.IN, GPIO.PUD_DOWN)
+        dprint(f"Setting up pin {GPIO_LISTEN_PIN} as input, with pull-down resistor enabled")
+        GPIO.setup(GPIO_LISTEN_PIN, GPIO.IN, GPIO.PUD_DOWN)
     else:
         dprint("[TEST MODE] We would be setting up the GPIO listen pin.")
 
@@ -314,10 +314,10 @@ dprint(f'{ver} in mode: {MODE}')
 
 current_playback_count = 1
 
-if play_forever:
+if PLAY_FOREVER:
     set_playback_count = 65535
 else:
-    set_playback_count = playback_count
+    set_playback_count = PLAYBACK_COUNT
 
 # Initialize player (regardless of primary or secondary mode)
 player, instance, media, duration = player_launch(media_file=media_file, set_playback_count=set_playback_count)
@@ -334,12 +334,12 @@ if MODE == 'primary':
     print('\n\nNote: to terminate prematurely, hit [Control]-[C] at the text screen. ([f] to  exit fullscreen, and/or [alt]-[tab] to switch windows)\n\n')
 
     # Wait for file to load / buffer
-    dprint(f'Sleeping for {load_wait_duration} sec. for file to load / buffer')
-    time.sleep(load_wait_duration)      # (2 sec by default)
+    dprint(f'Sleeping for {LOAD_WAIT_DURATION} sec. for file to load / buffer')
+    time.sleep(LOAD_WAIT_DURATION)      # (2 sec by default)
     
     # Begin standard playback loop
-    while (current_playback_count <= playback_count) or play_forever:
-        dprint(f'Video playback count: {current_playback_count}/{playback_count}')
+    while (current_playback_count <= PLAYBACK_COUNT) or PLAY_FOREVER:
+        dprint(f'Video playback count: {current_playback_count}/{PLAYBACK_COUNT}')
                                                                     
         # Pins to high - 2nd trigger
         gpio_send_pin_high()
@@ -357,7 +357,7 @@ if MODE == 'primary':
 
         current_playback_count += 1
 
-    dprint(f'We have played the number of times specified ({playback_count}), exiting media player')
+    dprint(f'We have played the number of times specified ({PLAYBACK_COUNT}), exiting media player')
     vid_quit(vlc_player=player, instance=instance)
     
     gpio_close() # Cleanup pins
@@ -368,12 +368,12 @@ elif MODE == 'secondary':
     setup_gpio_listen_pin()
 
     # Wait for file to load / buffer, one second shorter than the primary
-    dprint(f'Sleeping for {load_wait_duration - 1} seconds, for file to load / buffer (1 sec shorter than primary)')
-    time.sleep(load_wait_duration - 1)      # [2 - 1] seconds by default
+    dprint(f'Sleeping for {LOAD_WAIT_DURATION - 1} seconds, for file to load / buffer (1 sec shorter than primary)')
+    time.sleep(LOAD_WAIT_DURATION - 1)      # [2 - 1] seconds by default
     dprint('Prepared to start (as secondary)')
 
     # Begin standard playback loop
-    while (current_playback_count <= playback_count) or play_forever:
+    while (current_playback_count <= PLAYBACK_COUNT) or PLAY_FOREVER:
         # Wait for RISE (GPIO going High on Main)
 
         wait_for_gpio()
