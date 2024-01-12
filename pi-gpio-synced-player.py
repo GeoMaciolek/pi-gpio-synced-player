@@ -9,12 +9,6 @@ from datetime import datetime, timedelta
 ############################
 ### Application Settings ###
 
-# Set to True to skip GPIO etc - for testing NOT on a pi
-TEST_MODE_FAKE_GPIO = True
-
-# Set to True to run in fullscreen mode
-FULLSCREEN_MODE = False
-
 # Set to "primary" for main / controller, or "secondary" for the listener units
 MODE = 'primary'
 
@@ -25,6 +19,12 @@ media_file = 'your_media_file.mp4'
 # media_file = 'rem/synctest2.mp4'
 # media_file = 'bbb.mp4'
 # media_file = 'D:\\media\\other file.mp4' # Windows example
+
+# Set to True to skip GPIO etc - for testing NOT on a pi
+TEST_MODE_FAKE_GPIO = False
+
+# Set to True to run in fullscreen mode
+FULLSCREEN_MODE = False
 
 # Loop forever? Except for testing, set to: True 
 play_forever = True
@@ -86,7 +86,7 @@ def vid_quit(vlc_player, instance):
     dprint('calling instance.release()')
     instance.release()
 
-    dprint('player and intstance have been released; exiting vid_quit()')
+    dprint('Player and Instance have been released; exiting vid_quit()')
 
 # Reset to start - assumes video is playing, and leaves it paused after
 def wait_for_gpio(gpio_listen_pin: int = gpio_listen_pin, debug_mode_sleep_sec: int = 6):
