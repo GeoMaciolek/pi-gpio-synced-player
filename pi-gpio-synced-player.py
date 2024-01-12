@@ -4,16 +4,16 @@ import time
 import vlc
 import inspect # For debugging (identify calling function)
 
-from datetime import datetime
-
-# Set to True to skip GPIO etc - for testing NOT on a pi
-TEST_MODE_FAKE_GPIO = False
-
-# Set to True to run in fullscreen mode
-FULLSCREEN_MODE = True
+from datetime import datetime, timedelta
 
 ############################
 ### Application Settings ###
+
+# Set to True to skip GPIO etc - for testing NOT on a pi
+TEST_MODE_FAKE_GPIO = True
+
+# Set to True to run in fullscreen mode
+FULLSCREEN_MODE = False
 
 # Set to "primary" for main / controller, or "secondary" for the listener units
 MODE = 'primary'
@@ -30,15 +30,21 @@ play_forever = True
 # For testing - playback loop count
 playback_count = 3
 
-# On-screen Time/playback Display Enabled? Normally set: False
-osd_enabled = True
-
 # What GPIO pins are used for the main/secondary communication
 gpio_listen_pin = 4     # note - 3 has internal pull-up resistor, 4 has pull-down resistor
 gpio_transmit_pins = [17,27,22] # set as a list - can have only one member, though, if only one needed
 
-# delay after initial load command before pause  
+# How long to let the media play after initially loading the file (to get the duration.) Minimum of 0.5 recommended
+PLAYBACK_AFTER_LOAD_DURATION_SEC: float = 0.5 
+
+# How long to keep the GPIO pins high (in seconds)
+PIN_TX_DURATION_SEC: float = 0.5
+
+# delay (in seconds) after initial load command before pause. MUST BE AT LEAST 1 SECOND!
 load_wait_duration = 2
+
+# On-screen Time/playback Display Enabled? Normally set: False
+osd_enabled = True
 
 if not TEST_MODE_FAKE_GPIO:
     import RPi.GPIO as GPIO
@@ -228,7 +234,7 @@ gpio_initialize()
 
 print(f'{ver} in mode: {MODE}')
 
-count = 0
+current_playback_count = 0
 
 if play_forever:
     set_playback_count = 65535
@@ -263,7 +269,7 @@ if MODE == 'primary':
 #    GPIO.output(gpio_transmit_pin, GPIO.HIGH)
 
     # Wait for file to load / buffer
-    time.sleep(load_wait_duration // 1000)      # [5] sec
+    time.sleep(load_wait_duration)      # (2 sec by default)
     
     # Begin standard playback loop
     while (count <= playback_count) or play_forever:
@@ -275,7 +281,7 @@ if MODE == 'primary':
         player_start_at_beginning(player=player)
         print(f'{timestamp()} - end:    player_start_at_beginning()')
         # Pins to low
-        time.sleep(0.5)
+        time.sleep(PIN_TX_DURATION_SEC)
         gpio_send_pin_low()
 
         print(f'{timestamp()} - Waiting for the end of the video...')
