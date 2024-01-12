@@ -20,9 +20,11 @@ MODE = 'primary'
 
 # Filename to play
 media_file = 'your_media_file.mp4'
+
 # Other examples:
-# mfile = 'rem/synctest2.mp4'
-# mfile = 'bbb.mp4'
+# media_file = 'rem/synctest2.mp4'
+# media_file = 'bbb.mp4'
+# media_file = 'D:\\media\\other file.mp4' # Windows example
 
 # Loop forever? Except for testing, set to: True 
 play_forever = True
