@@ -2,6 +2,7 @@ ver = 'pi-gpio-synced-player.py 0.6.1 - vlc edition'
 
 import time
 import vlc
+import inspect # For debugging (identify calling function)
 
 from datetime import datetime
 
@@ -47,7 +48,23 @@ if not TEST_MODE_FAKE_GPIO:
 ################################
 
 def timestamp():
-    return datetime.now().strftime("%H:%M:%S.%f")
+    return datetime.now().strftime("%H:%M:%S.%f")[:11]
+
+def dprint(msg: str = None):
+    """Prints a message with a timestamp & the calling function name.
+
+    If no message is provided, only the timestamp & function name are printed.
+
+    Args:
+        msg (str): The message to print (optional)
+    """
+    # print(f'{inspect.stack()[1][3]}(): {msg}')
+    debug_msg = f'[{timestamp()} {MODE[:3]}] {inspect.stack()[1].function}()'
+    if msg:
+        debug_msg += f': {msg}'
+
+    print(debug_msg)
+
 
 def vid_quit(vlc_player):
     #print('send_key("q")')
