@@ -16,7 +16,7 @@ FULLSCREEN_MODE = True
 ### Application Settings ###
 
 # Set to "primary" for main / controller, or "secondary" for the listener units
-mode = 'primary'
+MODE = 'primary'
 
 # Filename to play
 media_file = 'your_media_file.mp4'
@@ -226,7 +226,7 @@ def player_wait_for_end(player: vlc.MediaPlayer, duration: int):
 # Intialize pi GPIO
 gpio_initialize()
 
-print(f'{ver} in mode: {mode}')
+print(f'{ver} in mode: {MODE}')
 
 count = 0
 
@@ -252,7 +252,7 @@ print('sleeping after init')
 time.sleep(3)
 print('continuing')
 
-if mode == 'primary':
+if MODE == 'primary':
 
     print('++++ Loading ++++')
     gpio_setup_transmit_pins()
@@ -289,7 +289,7 @@ if mode == 'primary':
     vid_quit()
 
 # Otherwise, run as secondary
-elif mode == 'secondary':
+elif MODE == 'secondary':
     # Set up listening pin
     setup_gpio_listen_pin()
 
@@ -310,7 +310,7 @@ elif mode == 'secondary':
     vid_quit()
 
 else:
-    print(f"Mode should be set to 'primary' or 'secondary', not {mode}")
+    print(f"Mode should be set to 'primary' or 'secondary', not {MODE}")
 
 print('++++ End ++++')
 print('Note: if keyboard is not working, hit Control-C, then type "reset" and hit enter')
