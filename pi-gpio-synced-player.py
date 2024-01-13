@@ -155,7 +155,7 @@ def listen_pin_deactivate(player: vlc.MediaPlayer):
     dprint(f'Listen pin deactivated! (falling edge)')
     player_resume(player=player)
 
-def gpio_setup_listen_pin(listen_pin_number: int, player: vlc.MediaPlayer) -> DigitalInputDevice:
+def gpio_setup_listen_pin(listen_pin_number: int, player: vlc.MediaPlayer):
     if not TEST_MODE_FAKE_GPIO:
         # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         dprint(f"Setting up pin {listen_pin_number} as input, with pull-down resistor enabled")
