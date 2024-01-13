@@ -418,7 +418,7 @@ dprint('Player init should be done')
 if MODE == 'primary':
 
     dprint('Primary mode initializing.')
-    gpio_setup_transmit_pins()
+    gpio_setup_transmit_pins(transmit_pin_ids=GPIO_TRANSMIT_PINS)
     print('\n\nNote: to terminate prematurely, hit [Control]-[C] at the text screen. ([f] to  exit fullscreen, and/or [alt]-[tab] to switch windows)\n\n')
 
     # Wait for file to load / buffer
