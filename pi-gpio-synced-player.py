@@ -418,7 +418,7 @@ dprint('Player init should be done')
 if MODE == 'primary':
 
     dprint('Primary mode initializing.')
-    gpio_setup_transmit_pins(transmit_pin_ids=GPIO_TRANSMIT_PINS)
+    transmit_pins = gpio_setup_transmit_pins(transmit_pin_ids=GPIO_TRANSMIT_PINS)
     print('\n\nNote: to terminate prematurely, hit [Control]-[C] at the text screen. ([f] to  exit fullscreen, and/or [alt]-[tab] to switch windows)\n\n')
 
     # Wait for file to load / buffer
@@ -430,13 +430,13 @@ if MODE == 'primary':
         dprint(f'Video playback count: {current_playback_count}/{PLAYBACK_COUNT}')
                                                                     
         # Pins to high - 2nd trigger
-        gpio_send_pin_high()
+        gpio_send_pin_high(transmit_pins=transmit_pins)
         player_prepare_to_restart(player=player)
 
         # Wait, then pins to low
         dprint(f'Waiting {PIN_TX_DURATION_SEC} seconds, then setting pins low')
         time.sleep(PIN_TX_DURATION_SEC)
-        gpio_send_pin_low()
+        gpio_send_pin_low(transmit_pins=transmit_pins)
         player_resume(player=player)
 
         dprint(f'Waiting for the end of the video...')
