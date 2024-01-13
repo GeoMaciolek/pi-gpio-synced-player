@@ -71,7 +71,7 @@ def dprint(msg: str = None):
 
     print(debug_msg)
 
-def config_split_list(configstring: str, delimiter: str = ',') -> list:
+def config_split_list(configstring: str, delimiter: str = ',', cast_to_int: bool = True) -> list:
     """Splits a config string into a list, using the specified delimiter
 
     Args:
@@ -81,6 +81,13 @@ def config_split_list(configstring: str, delimiter: str = ',') -> list:
     Returns:
         list: The list of strings
     """
+    output_list = []
+    for x in configstring.split(delimiter):
+        if cast_to_int:
+            output_list.append(int(x.strip()))
+        else:
+            output_list.append(x.strip())
+
     return [x.strip() for x in configstring.split(delimiter)]
 
 def vid_quit(vlc_player, instance):
