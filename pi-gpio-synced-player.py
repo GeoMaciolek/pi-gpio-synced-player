@@ -49,7 +49,7 @@ GPIO_LISTEN_PIN_DEFAULT = 4     # note - 3 has internal pull-up resistor, 4 has 
 GPIO_TRANSMIT_PINS_DEFAULT = [17,27,22] # set as a list - can have only one member, though, if only one needed
 
 # How long to let the media play after initially loading the file (to get the duration.) Minimum of 0.5 recommended
-PLAYBACK_AFTER_LOAD_DURATION_SEC_DEFAULT: float = 0.5 
+PLAYBACK_AFTER_LOAD_DURATION_SEC_DEFAULT: float = 2.5 
 
 # How long to keep the GPIO pins high (in seconds)
 PIN_TX_DURATION_SEC_DEFAULT: float = 2.0
@@ -203,14 +203,15 @@ def player_launch(media_file:str, set_playback_count=1) -> (vlc.MediaPlayer, vlc
     dprint('Playing briefly, to get video duration.')
     vlc_player.play()
     time.sleep(PLAYBACK_AFTER_LOAD_DURATION_SEC)
-    vlc_player.pause()
+    # vlc_player.pause()
+    player_prepare_to_restart(player=vlc_player)
     
     dprint('Done with brief playback, retrieving media duration.')
 
     media_duration = vlc_media.get_duration()
     dprint(f'vlc_media.get_duration() returned {media_duration}ms [{timedelta(milliseconds=media_duration)}]')
 
-    
+
     # if osd_enabled:
     #     player.set_option('osc')
 
@@ -422,8 +423,8 @@ if MODE == 'primary':
     print('\n\nNote: to terminate prematurely, hit [Control]-[C] at the text screen. ([f] to  exit fullscreen, and/or [alt]-[tab] to switch windows)\n\n')
 
     # Wait for file to load / buffer
-    dprint(f'Sleeping for {LOAD_WAIT_DURATION} sec. for file to load / buffer')
-    time.sleep(LOAD_WAIT_DURATION)      # (2 sec by default)
+    # dprint(f'Sleeping for {LOAD_WAIT_DURATION} sec. for file to load / buffer')
+    # time.sleep(LOAD_WAIT_DURATION)      # (2 sec by default)
     
     # Begin standard playback loop
     while (current_playback_count <= PLAYBACK_COUNT) or PLAY_FOREVER:
@@ -454,9 +455,9 @@ elif MODE == 'secondary':
     listen_pin = gpio_setup_listen_pin(listen_pin_number=GPIO_LISTEN_PIN, player=player)
   
     # Wait for file to load / buffer, one second shorter than the primary
-    dprint(f'Sleeping for {LOAD_WAIT_DURATION - 1} seconds, for file to load / buffer (1 sec shorter than primary)')
-    time.sleep(LOAD_WAIT_DURATION - 1)      # [2 - 1] seconds by default
-    dprint('Prepared to start (as secondary)')
+    # dprint(f'Sleeping for {LOAD_WAIT_DURATION - 1} seconds, for file to load / buffer (1 sec shorter than primary)')
+    # time.sleep(LOAD_WAIT_DURATION - 1)      # [2 - 1] seconds by default
+    # dprint('Prepared to start (as secondary)')
 
     # Begin standard playback loop
     while (current_playback_count <= PLAYBACK_COUNT) or PLAY_FOREVER:
