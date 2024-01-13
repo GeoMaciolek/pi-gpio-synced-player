@@ -2,55 +2,50 @@ ver = 'pi-gpio-synced-player.py 0.6.1 - vlc edition'
 
 import time
 import vlc
+import configparser
 import inspect # For debugging (identify calling function)
 
 from datetime import datetime, timedelta
+from pprint import pprint
 
 ############################
 ### Application Settings ###
 
+CONFIG_FILE = 'pi-gpio-synced-player.ini'
+
 # Set to "primary" for main / controller, or "secondary" for the listener units
-MODE = 'primary'
+MODE_DEFAULT = 'primary'
 
-# Filename to play
-media_file = 'your_media_file.mp4'
-
-# Other examples:
-# media_file = 'rem/synctest2.mp4'
-# media_file = 'bbb.mp4'
-# media_file = 'D:\\media\\other file.mp4' # Windows example
+# MEDIA_FILE - no default is included, this must be specified in the
+# pi-gpio-synced-player.ini file
 
 # Set to True to skip GPIO etc - for testing NOT on a pi
-TEST_MODE_FAKE_GPIO = False
+TEST_MODE_FAKE_GPIO_DEFAULT = False
 
 # Set to True to run in fullscreen mode
-FULLSCREEN_MODE = False
+FULLSCREEN_MODE_DEFAULT = True
 
 # Loop forever? Except for testing, set to: True 
-PLAY_FOREVER = True
+PLAY_FOREVER_DEFAULT = True
 
 # For testing - playback loop count
 PLAYBACK_COUNT_DEFAULT = 3
 
 # What GPIO pins are used for the main/secondary communication
-GPIO_LISTEN_PIN = 4     # note - 3 has internal pull-up resistor, 4 has pull-down resistor
-GPIO_TRANSMIT_PINS = [17,27,22] # set as a list - can have only one member, though, if only one needed
+GPIO_LISTEN_PIN_DEFAULT = 4     # note - 3 has internal pull-up resistor, 4 has pull-down resistor
+GPIO_TRANSMIT_PINS_DEFAULT = [17,27,22] # set as a list - can have only one member, though, if only one needed
 
 # How long to let the media play after initially loading the file (to get the duration.) Minimum of 0.5 recommended
-PLAYBACK_AFTER_LOAD_DURATION_SEC: float = 0.5 
+PLAYBACK_AFTER_LOAD_DURATION_SEC_DEFAULT: float = 0.5 
 
 # How long to keep the GPIO pins high (in seconds)
-PIN_TX_DURATION_SEC: float = 0.5
+PIN_TX_DURATION_SEC_DEFAULT: float = 0.5
 
 # delay (in seconds) after initial load command before pause. MUST BE AT LEAST 1 SECOND!
-LOAD_WAIT_DURATION = 2
+LOAD_WAIT_DURATION_DEFAULT = 2
 
 # On-screen Time/playback Display Enabled? Normally set: False
 osd_enabled = True
-
-if not TEST_MODE_FAKE_GPIO:
-    import RPi.GPIO as GPIO
-
 
 ### End Application Settings ###
 ################################
@@ -76,6 +71,17 @@ def dprint(msg: str = None):
 
     print(debug_msg)
 
+def config_split_list(configstring: str, delimiter: str = ',') -> list:
+    """Splits a config string into a list, using the specified delimiter
+
+    Args:
+        configstring (str): The string to split
+        delimiter (str, optional): The delimiter to split on. Defaults to ','.
+
+    Returns:
+        list: The list of strings
+    """
+    return [x.strip() for x in configstring.split(delimiter)]
 
 def vid_quit(vlc_player, instance):
     dprint('vid_quit() called. calling vlc_player.stop() & waiting 1 second')
@@ -89,7 +95,7 @@ def vid_quit(vlc_player, instance):
     dprint('Player and Instance have been released; exiting vid_quit()')
 
 # Reset to start - assumes video is playing, and leaves it paused after
-def wait_for_gpio(gpio_listen_pin: int = GPIO_LISTEN_PIN, debug_mode_sleep_sec: int = 6):
+def wait_for_gpio(gpio_listen_pin: int, debug_mode_sleep_sec: int = 6):
     """Waits for a GPIO pin to go high (rising edge)
 
     Args:
@@ -306,8 +312,69 @@ def player_wait_for_end(player: vlc.MediaPlayer, duration: int,
 # Begin Main Application Logic #
 ################################
 
+# Load configuration options
+config_parsed = configparser.ConfigParser()
+config_parsed.read(CONFIG_FILE)
 
-# Intialize pi GPIO
+# Check for media file - exit if none is specified
+if not config_parsed.has_option('Video', 'MediaFile'):
+    print(f'ERROR: No media file specified in {CONFIG_FILE}')
+    exit(1)
+
+conf = {
+    #     # Video
+    'MEDIA_FILE': config_parsed.get('Video', 'MediaFile'),
+    'FULLSCREEN_MODE': config_parsed.getboolean('Video', 'Fullscreen', fallback=FULLSCREEN_MODE_DEFAULT),
+    'PLAY_FOREVER': config_parsed.getboolean('Video', 'PlayForever', fallback=PLAY_FOREVER_DEFAULT),
+    'PLAYBACK_COUNT': config_parsed.getint('Video', 'PlaybackCount', fallback=PLAYBACK_COUNT_DEFAULT),
+
+    # Sync
+    'MODE': config_parsed.get('Sync', 'SyncMode', fallback=MODE_DEFAULT),
+    # Split the below into a list
+    'GPIO_TRANSMIT_PINS': config_split_list(config_parsed.get('Sync', 'TransmitPins', fallback=','.join(str(x) for x in GPIO_TRANSMIT_PINS_DEFAULT))),
+    'GPIO_LISTEN_PIN': int(config_parsed.get('Sync', 'ListenPin', fallback=GPIO_LISTEN_PIN_DEFAULT)),
+    'LOAD_WAIT_DURATION': config_parsed.getfloat('Sync', 'LoadWaitDuration', fallback=LOAD_WAIT_DURATION_DEFAULT),
+    'PIN_TX_DURATION_SEC': config_parsed.getfloat('Sync', 'PinTxDurationSec', fallback=PIN_TX_DURATION_SEC_DEFAULT),
+
+    # Advanced
+    'PLAYBACK_AFTER_LOAD_DURATION_SEC': config_parsed.getfloat('Advanced', 'PlaybackAfterLoadDurationSec', fallback=PLAYBACK_AFTER_LOAD_DURATION_SEC_DEFAULT),
+
+    # Debug
+    'TEST_MODE_FAKE_GPIO': config_parsed.getboolean('Debug', 'FakeGPIO', fallback=TEST_MODE_FAKE_GPIO_DEFAULT),
+    # 'osd_enabled': config_parsed.getboolean('video', 'osd_enabled', fallback=osd_enabled)
+    # }
+}
+
+# Video
+MEDIA_FILE = conf['MEDIA_FILE']
+LOAD_WAIT_DURATION = conf['LOAD_WAIT_DURATION']
+FULLSCREEN_MODE = conf['FULLSCREEN_MODE']
+PLAY_FOREVER = conf['PLAY_FOREVER']
+PLAYBACK_COUNT = conf['PLAYBACK_COUNT']
+
+# Sync
+MODE = conf['MODE']
+GPIO_TRANSMIT_PINS = conf['GPIO_TRANSMIT_PINS']
+GPIO_LISTEN_PIN = conf['GPIO_LISTEN_PIN']
+LOAD_WAIT_DURATION = conf['LOAD_WAIT_DURATION']
+PIN_TX_DURATION_SEC = conf['PIN_TX_DURATION_SEC']
+
+# Advanced
+PLAYBACK_AFTER_LOAD_DURATION_SEC = conf['PLAYBACK_AFTER_LOAD_DURATION_SEC']
+
+# Debug
+TEST_MODE_FAKE_GPIO = conf['TEST_MODE_FAKE_GPIO']
+PIN_TX_DURATION_SEC = conf['PIN_TX_DURATION_SEC']
+
+dprint('Configuration loaded from file:')
+pprint(conf)
+
+
+# Initialize pi GPIO
+
+if not TEST_MODE_FAKE_GPIO:
+    import RPi.GPIO as GPIO
+
 gpio_initialize()
 
 dprint(f'{ver} in mode: {MODE}')
@@ -320,7 +387,7 @@ else:
     set_playback_count = PLAYBACK_COUNT
 
 # Initialize player (regardless of primary or secondary mode)
-player, instance, media, duration = player_launch(media_file=media_file, set_playback_count=set_playback_count)
+player, instance, media, duration = player_launch(media_file=MEDIA_FILE, set_playback_count=set_playback_count)
 
 dprint('Player init should be done')
 
@@ -376,7 +443,7 @@ elif MODE == 'secondary':
     while (current_playback_count <= PLAYBACK_COUNT) or PLAY_FOREVER:
         # Wait for RISE (GPIO going High on Main)
 
-        wait_for_gpio()
+        wait_for_gpio(gpio_listen_pin=GPIO_LISTEN_PIN)
         player_start_at_beginning(player=player)
 
     gpio_close()
