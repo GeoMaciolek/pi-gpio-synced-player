@@ -1,5 +1,18 @@
 ver = 'pi-gpio-synced-player.py 0.6.1 - vlc edition'
 
+
+#############
+#
+# TODO
+#
+# * Change pin logic
+# When pin goes high, pause, reset time to beginning
+# When pin goes low, resume playback
+#
+# this may require the use of callbacks, and `darksidesync` module`
+
+
+
 import time
 import vlc
 import configparser
@@ -39,7 +52,7 @@ GPIO_TRANSMIT_PINS_DEFAULT = [17,27,22] # set as a list - can have only one memb
 PLAYBACK_AFTER_LOAD_DURATION_SEC_DEFAULT: float = 0.5 
 
 # How long to keep the GPIO pins high (in seconds)
-PIN_TX_DURATION_SEC_DEFAULT: float = 0.5
+PIN_TX_DURATION_SEC_DEFAULT: float = 2.0
 
 # delay (in seconds) after initial load command before pause. MUST BE AT LEAST 1 SECOND!
 LOAD_WAIT_DURATION_DEFAULT = 2
@@ -238,6 +251,16 @@ def player_reset_to_start(player: vlc.MediaPlayer):
     player.set_time(0)
     dprint('Done, time reset.')
 
+def player_pause(player: vlc.MediaPlayer):
+    dprint('Pausing playback.')
+    player.pause()
+    dprint('(Pause function complete)')
+
+def player_prepare_to_restart(player: vlc.MediaPlayer):
+    dprint('Preparing to restart playback')
+    player_pause(player=player)
+    player_reset_to_start(player=player)
+
 def player_resume(player):
     dprint('Resuming playback [calling player.play()]')
     playing_status = player.get_state()
@@ -418,13 +441,12 @@ if MODE == 'primary':
                                                                     
         # Pins to high - 2nd trigger
         gpio_send_pin_high()
+        player_prepare_to_restart(player=player)
 
-        dprint('launch: player_start_at_beginning()')
-        player_start_at_beginning(player=player)
-        dprint('end:    player_start_at_beginning()')
         # Pins to low
         time.sleep(PIN_TX_DURATION_SEC)
         gpio_send_pin_low()
+        player_resume(player=player)
 
         dprint(f'Waiting for the end of the video...')
         player_wait_for_end(player=player, duration=duration, ms_before_end_to_stop=3000)
@@ -442,6 +464,7 @@ elif MODE == 'secondary':
     # Set up listening pin
     setup_gpio_listen_pin()
 
+  
     # Wait for file to load / buffer, one second shorter than the primary
     dprint(f'Sleeping for {LOAD_WAIT_DURATION - 1} seconds, for file to load / buffer (1 sec shorter than primary)')
     time.sleep(LOAD_WAIT_DURATION - 1)      # [2 - 1] seconds by default
@@ -451,8 +474,12 @@ elif MODE == 'secondary':
     while (current_playback_count <= PLAYBACK_COUNT) or PLAY_FOREVER:
         # Wait for RISE (GPIO going High on Main)
 
-        wait_for_gpio(gpio_listen_pin=GPIO_LISTEN_PIN)
-        player_start_at_beginning(player=player)
+        # wait_for_gpio(gpio_listen_pin=GPIO_LISTEN_PIN)
+        # player_start_at_beginning(player=player)
+        dprint(f'Waiting for the end of the video...')
+        player_wait_for_end(player=player, duration=duration, ms_before_end_to_stop=1000)
+        dprint(f'player_wait_for_end() returned - Video has ended!')
+
 
     gpio_close()
     vid_quit(vlc_player=player, instance=instance)
