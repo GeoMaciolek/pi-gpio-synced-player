@@ -427,7 +427,7 @@ if MODE == 'primary':
         gpio_send_pin_low()
 
         dprint(f'Waiting for the end of the video...')
-        player_wait_for_end(player=player, duration=duration)
+        player_wait_for_end(player=player, duration=duration, ms_before_end_to_stop=3000)
         dprint(f'player_wait_for_end() returned - Video has ended!')
 
         current_playback_count += 1
