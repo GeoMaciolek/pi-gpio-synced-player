@@ -115,70 +115,59 @@ def vid_quit(vlc_player, instance):
 
     dprint('Player and Instance have been released; exiting vid_quit()')
 
-# Reset to start - assumes video is playing, and leaves it paused after
-def wait_for_gpio(gpio_listen_pin: int, debug_mode_sleep_sec: int = 6):
-    """Waits for a GPIO pin to go high (rising edge)
-
-    Args:
-        gpio_listen_pin (int, optional): The GPIO pin to listen on. Defaults to (global) gpio_listen_pin. TODO: FIX GLOBALS
-        debug_mode_sleep_sec (int, optional): How long to sleep in debug mode. Defaults to 6.
-    """
-    if TEST_MODE_FAKE_GPIO:
-        dprint('TEST MODE, "Waiting for a rising pin" (just sleep 5)')
-        time.sleep(debug_mode_sleep_sec)
-        dprint(f'We got a (fake) rising pin!')
-    else:
-        dprint(f'Waiting for a rising pin: {gpio_listen_pin}.')
-        GPIO.wait_for_edge(gpio_listen_pin, GPIO.RISING)
-        dprint('We got a rising pin!') 
-
-def gpio_setup_transmit_pins():
+def gpio_setup_transmit_pins(transmit_pin_ids) -> list:
     # Set up the pins for the main/secondary communication
+    transmit_pins = []
     if not TEST_MODE_FAKE_GPIO:
-        for gpio_transmit_pin in GPIO_TRANSMIT_PINS:
-            dprint(f"setting up pin {gpio_transmit_pin} as output, default to LOW")
-            GPIO.setup(gpio_transmit_pin, GPIO.OUT, initial=GPIO.LOW)
+        dprint(f"Setting up transmit pins as list of gpiozero.DigitalOutputDevice()")
+        for pin_id in transmit_pin_ids:
+            new_pin = DigitalOutputDevice(pin=pin_id)
+            transmit_pins.append(new_pin)
     else:
         dprint("[TEST MODE] - We would be setting up all transmit pins")
+        transmit_pins = [1,2,3]
+                         
+    return(transmit_pins)
 
 
-def gpio_initialize():
+def gpio_send_pin_high(transmit_pins: list):
     if not TEST_MODE_FAKE_GPIO:
-        dprint("Initializing GPIO interface, GPIO.setmode(GPIO.BCM)")
-        GPIO.setmode(GPIO.BCM)
-    else:
-        dprint("[TEST MODE] We would be setting the GPIO mode.")
-
-def gpio_close():
-    if not TEST_MODE_FAKE_GPIO:
-        dprint("Closing GPIO interface: GPIO.cleanup()")
-        GPIO.cleanup()
-    else:
-        dprint("[TEST MODE] We would be closing the GPIO pins.")
-
-def gpio_send_pin_high():
-    if not TEST_MODE_FAKE_GPIO:
-        for gpio_transmit_pin in GPIO_TRANSMIT_PINS:
-            dprint(f"Set pin {gpio_transmit_pin} to HIGH")
-            GPIO.output(gpio_transmit_pin, GPIO.HIGH)
+        for pin in transmit_pins:
+            dprint(f"Set pin {pin} to HIGH/on")
+            pin.on()
     else:
         dprint("[TEST MODE] We would be setting the GPIO pins high.")
 
-def gpio_send_pin_low():
+
+def gpio_send_pin_low(transmit_pins: list):
     if not TEST_MODE_FAKE_GPIO:
-        for gpio_transmit_pin in GPIO_TRANSMIT_PINS:
-            dprint("Setting pin {gpio_transmit_pin} to LOW")
-            GPIO.output(gpio_transmit_pin, GPIO.LOW)
+        for pin in transmit_pins:
+            dprint("Setting pin {pin} to LOW/off")
+            pin.off()
     else:
         dprint("[TEST MODE] We would be setting the GPIO pins low.")
 
-def setup_gpio_listen_pin():
+def listen_pin_activate(player: vlc.MediaPlayer):
+    dprint(f'Listen pin activated! (rising edge)')
+    player_prepare_to_restart(player=player)
+
+def listen_pin_deactivate(player: vlc.MediaPlayer):
+    dprint(f'Listen pin deactivated! (falling edge)')
+    player_resume(player=player)
+
+def gpio_setup_listen_pin(listen_pin_number: int, player: vlc.MediaPlayer) -> DigitalInputDevice:
     if not TEST_MODE_FAKE_GPIO:
         # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        dprint(f"Setting up pin {GPIO_LISTEN_PIN} as input, with pull-down resistor enabled")
-        GPIO.setup(GPIO_LISTEN_PIN, GPIO.IN, GPIO.PUD_DOWN)
+        dprint(f"Setting up pin {listen_pin_number} as input, with pull-down resistor enabled")
+        listen_pin = DigitalInputDevice(pin=listen_pin_number, pull_up=False)
+
+        # We use a lambda so we can pass the player object to the callback
+        listen_pin.when_activated = lambda : listen_pin_activate(player=player)
+        listen_pin.when_deactivated = lambda : listen_pin_deactivate(player=player)
     else:
         dprint("[TEST MODE] We would be setting up the GPIO listen pin.")
+
+    return(listen_pin)
 
 def player_launch(media_file:str, set_playback_count=1) -> (vlc.MediaPlayer, vlc.Instance, vlc.Media):
     """launch the media player
@@ -404,9 +393,10 @@ pprint(conf)
 # Initialize pi GPIO
 
 if not TEST_MODE_FAKE_GPIO:
-    import RPi.GPIO as GPIO
+    # import RPi.GPIO as GPIO
+    from gpiozero import DigitalInputDevice, DigitalOutputDevice
 
-gpio_initialize()
+# gpio_initialize()
 
 dprint(f'{ver} in mode: {MODE}')
 
@@ -443,7 +433,8 @@ if MODE == 'primary':
         gpio_send_pin_high()
         player_prepare_to_restart(player=player)
 
-        # Pins to low
+        # Wait, then pins to low
+        dprint(f'Waiting {PIN_TX_DURATION_SEC} seconds, then setting pins low')
         time.sleep(PIN_TX_DURATION_SEC)
         gpio_send_pin_low()
         player_resume(player=player)
@@ -457,13 +448,10 @@ if MODE == 'primary':
     dprint(f'We have played the number of times specified ({PLAYBACK_COUNT}), exiting media player')
     vid_quit(vlc_player=player, instance=instance)
     
-    gpio_close() # Cleanup pins
-
 # Otherwise, run as secondary
 elif MODE == 'secondary':
-    # Set up listening pin
-    setup_gpio_listen_pin()
-
+    # Set up listening pin & associated events    
+    listen_pin = gpio_setup_listen_pin(listen_pin_number=GPIO_LISTEN_PIN, player=player)
   
     # Wait for file to load / buffer, one second shorter than the primary
     dprint(f'Sleeping for {LOAD_WAIT_DURATION - 1} seconds, for file to load / buffer (1 sec shorter than primary)')
@@ -480,8 +468,6 @@ elif MODE == 'secondary':
         player_wait_for_end(player=player, duration=duration, ms_before_end_to_stop=1000)
         dprint(f'player_wait_for_end() returned - Video has ended!')
 
-
-    gpio_close()
     vid_quit(vlc_player=player, instance=instance)
 
 else:
