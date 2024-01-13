@@ -81,6 +81,7 @@ def config_split_list(configstring: str, delimiter: str = ',', cast_to_int: bool
     Returns:
         list: The list of strings
     """
+
     output_list = []
     for x in configstring.split(delimiter):
         if cast_to_int:
@@ -88,7 +89,7 @@ def config_split_list(configstring: str, delimiter: str = ',', cast_to_int: bool
         else:
             output_list.append(x.strip())
 
-    return [x.strip() for x in configstring.split(delimiter)]
+    return(output_list)
 
 def vid_quit(vlc_player, instance):
     dprint('vid_quit() called. calling vlc_player.stop() & waiting 1 second')
