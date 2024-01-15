@@ -15,8 +15,8 @@ autostartSciptLocation="$PWD/$autostartScript"
 
 # Identify suppurted Raspbian versions
 case $(cat /etc/debian_version) in
-11) VERSION=11;;
-12) VERSION=12;;
+11.*) VERSION=11;;
+12.*) VERSION=12;;
 *) VERSION=OTHER;;
 esac
 
@@ -25,9 +25,9 @@ if [ "$VERSION" = "OTHER" ]; then
     exit 1
 fi
 
-# exit if not running as root
-if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root. Exiting." 
+# exit if running as root
+if [[ $EUID -eq 0 ]]; then
+   echo "This script must be run as a standard user, not root. Exiting." 
    exit 1
 fi
 
@@ -72,7 +72,8 @@ if [ "$VERSION" = "11" ]; then
     autostartLine="@$autostartSciptLocation"
 
     # Note - adds a newline at the end. This is intentional.
-    echo "$autostartLine" >> "$lxdeAutostartFile"
+    # echo "$autostartLine" >> "$lxdeAutostartFile"
+    echo "$autostartLine" | sudo tee -a "$lxdeAutostartFile"
 
     # Check if the player autostart command was added to the autostart file
     if grep -q "$autostartScript" "$lxdeAutostartFile"; then
