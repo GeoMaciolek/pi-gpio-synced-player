@@ -221,7 +221,6 @@ def player_launch(media_file:str, set_playback_count=1) -> (vlc.MediaPlayer, vlc
     dprint('Playing briefly, to get video duration.')
     vlc_player.play()
     time.sleep(PLAYBACK_AFTER_LOAD_DURATION_SEC)
-    # vlc_player.pause()
     player_prepare_to_restart(player=vlc_player)
     
     dprint('Done with brief playback, retrieving media duration.')
@@ -260,8 +259,14 @@ def player_reset_to_start(player: vlc.MediaPlayer):
     dprint('Done, time reset.')
 
 def player_pause(player: vlc.MediaPlayer):
+    if player.get_state() == vlc.State.Paused:
+        dprint('Player is already paused, skipping pause command.')
+        return
+    elif player.get_state() != vlc.State.Playing:
+        dprint(f'Player is not playing (State: {player.get_state()}), skipping pause command.')
+        return
     dprint('Pausing playback.')
-    player.pause()
+    player_pause(player=player)
     dprint('(Pause function complete)')
 
 def player_prepare_to_restart(player: vlc.MediaPlayer):
