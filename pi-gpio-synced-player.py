@@ -367,7 +367,7 @@ conf = {
     'PLAYBACK_COUNT': config_parsed.getint('Video', 'PlaybackCount', fallback=PLAYBACK_COUNT_DEFAULT),
 
     # Sync
-    'MODE': config_parsed.get('Sync', 'SyncMode', fallback=MODE_DEFAULT),
+    'MODE': config_parsed.get('Sync', 'PlayerMode', fallback=MODE_DEFAULT),
     # Split the below into a list
     'GPIO_TRANSMIT_PINS': config_split_list(config_parsed.get('Sync', 'TransmitPins', fallback=','.join(str(x) for x in GPIO_TRANSMIT_PINS_DEFAULT))),
     'GPIO_LISTEN_PIN': int(config_parsed.get('Sync', 'ListenPin', fallback=GPIO_LISTEN_PIN_DEFAULT)),
