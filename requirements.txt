@@ -1,0 +1,2 @@
+-i https://pypi.org/simple
+python-vlc==3.0.20123
