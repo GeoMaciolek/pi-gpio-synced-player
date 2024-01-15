@@ -1,6 +1,7 @@
 #!/bin/bash
 
 autostartScript="lxterm-wrapper.sh"
+playbackWrapperScript="playback-wrapper.sh"
 # OS Specific files
 lxdeAutostartFile="/etc/xdg/lxsession/LXDE-pi/autostart"
 
@@ -11,6 +12,7 @@ playerName="wavesplayer"
 ### Init some variables
 
 autostartSciptLocation="$PWD/$autostartScript"
+playbackWrapperScriptLocation="$PWD/$playbackWrapperScript"
 
 
 # Identify suppurted Raspbian versions
@@ -41,7 +43,7 @@ fi
 wrapperStart="lxterminal -l -e '"
 wrapperEnd="; bash'"
 
-wrapperCommand="$wrapperStart$autostartSciptLocation$wrapperEnd"
+wrapperCommand="$wrapperStart$playbackWrapperScriptLocation$wrapperEnd"
 echo "Creating wrapper script: $autostartSciptLocation"
 echo "      $wrapperCommand"
 echo "$wrapperCommand" > "$autostartSciptLocation"
