@@ -27,5 +27,19 @@ if [ ! -f "$playerAutostartCommandFile" ]; then
     exit 1
 fi
 
+
+# Replace the tilde in the player autostart command file with the home directory
+d=$'\03'
+sed "s${d}\~${d}$HOME$d" < lxde-autostart-template > lxde-autostart
+
 # Copy the player autostart command file to the autostart file
+echo "Adding player autostart command to autostart file."
 cat "$playerAutostartCommandFile" >> "$autostartFile"
+
+# Check if the player autostart command was added to the autostart file
+if grep -q "pi-gpio-synced-player" "$autostartFile"; then
+    echo "Player autostart command added to autostart file."
+else
+    echo "Error: Player autostart command not added to autostart file. Exiting."
+    exit 1
+fi

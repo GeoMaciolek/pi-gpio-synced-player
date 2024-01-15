@@ -1,0 +1,7 @@
+lxde-autostart
+pi-gpio-synced-player.ini
+media/
+ignore/
+.vscode/
+# Debatable
+Pipfile.lock
