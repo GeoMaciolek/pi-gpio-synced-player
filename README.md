@@ -59,10 +59,11 @@ git clone https://github.com/GeoMaciolek/pi-gpio-synced-player.git
 #### Autostart
 
 To have the script run automatically on boot:
+(note - on Debian 11, you will be prompted for your password)
 
 ```bash
 cd ~/Downlods/pi-gpio-synced-player
-sudo ./setup-autostart.sh
+./setup-autostart.sh
 ```
 
 (This will add the needed lines from `lxde-autostart-template` to the system-wide

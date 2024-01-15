@@ -114,7 +114,7 @@ if [ "$VERSION" = "12" ]; then
         exit 0
     else
         echo "Adding [autostart] section to $wayfireAutostartFile"
-        echo "[autostart]" >> "$wayfireAutostartFile"
+        echo -e "\n[autostart]" >> "$wayfireAutostartFile"
         echo "$wayfireLauncherLine" >> "$wayfireAutostartFile"
         exit 0
     fi
