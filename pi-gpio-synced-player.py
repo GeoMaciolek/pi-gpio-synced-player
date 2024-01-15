@@ -135,16 +135,12 @@ def gpio_setup_transmit_pins(transmit_pin_ids, do_initialization_pulse = True,
             transmit_pins.append(new_pin)
             if do_initialization_pulse:
                 new_pin.on()
+
         if do_initialization_pulse:
             time.sleep(init_pulse_len)
-        for pin_id in transmit_pin_ids:
-            new_pin = DigitalOutputDevice(pin=pin_id)
-            transmit_pins.append(new_pin)
-            if do_initialization_pulse:
+            for pin in transmit_pins:
                 new_pin.off()
-        if do_initialization_pulse:
             time.sleep(init_delay)
-
     else:
         dprint("[TEST MODE] - We would be setting up all transmit pins")
         transmit_pins = [1,2,3]
