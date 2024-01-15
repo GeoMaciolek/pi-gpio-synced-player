@@ -1,16 +1,6 @@
-ver = 'pi-gpio-synced-player.py 0.7.0 - vlc edition'
-
-
-#############
-#
-# TODO
-#
-# * Change pin logic
-# When pin goes high, pause, reset time to beginning
-# When pin goes low, resume playback
-#
-# this may require the use of callbacks, and `darksidesync` module`
-
+script_name = 'pi-gpio-synced-player'
+script_url = 'https://github.com/GeoMaciolek/pi-gpio-synced-player'
+version = '0.7.0'
 
 
 import time
@@ -84,19 +74,23 @@ def dprint(msg: str = None):
 
     print(debug_msg)
 
-def config_split_list(configstring: str, delimiter: str = ',', cast_to_int: bool = True) -> list:
+def config_split_list(config_string: str, delimiter: str = ',', cast_to_int: bool = True, strip = True) -> list:
     """Splits a config string into a list, using the specified delimiter
 
     Args:
-        configstring (str): The string to split
+        config_string (str): The string to split
         delimiter (str, optional): The delimiter to split on. Defaults to ','.
+        cast_to_int (bool, optional): Cast the output to an integer? Defaults to True.
+        strip (bool, optional): Strip whitespace from the output? Defaults to True.
 
     Returns:
         list: The list of strings
     """
 
     output_list = []
-    for x in configstring.split(delimiter):
+    for x in config_string.split(delimiter):
+        if strip:
+            x = x.strip()
         if cast_to_int:
             output_list.append(int(x.strip()))
         else:
@@ -420,9 +414,12 @@ if not TEST_MODE_FAKE_GPIO:
     # import RPi.GPIO as GPIO
     from gpiozero import DigitalInputDevice, DigitalOutputDevice
 
-# gpio_initialize()
+# Print version info and run mode
+dprint(f'{script_name} v{version} - {script_url}')
+dprint(f'Playback mode: {MODE} mode')
 
-dprint(f'{ver} in mode: {MODE}')
+
+# dprint(f'{v} in mode: {MODE}')
 
 current_playback_count = 1
 
