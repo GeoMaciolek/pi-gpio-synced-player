@@ -1,4 +1,4 @@
-ver = 'pi-gpio-synced-player.py 0.6.1 - vlc edition'
+ver = 'pi-gpio-synced-player.py 0.7.0 - vlc edition'
 
 
 #############
@@ -159,7 +159,7 @@ def gpio_setup_listen_pin(listen_pin_number: int, player: vlc.MediaPlayer):
     if not TEST_MODE_FAKE_GPIO:
         # GPIO.setup(gpio_listen_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         dprint(f"Setting up pin {listen_pin_number} as input, with pull-down resistor enabled")
-        listen_pin = DigitalInputDevice(pin=listen_pin_number, pull_up=False)
+        listen_pin = DigitalInputDevice(pin=listen_pin_number, pull_up=False, bounce_time=0.020)
 
         # We use a lambda so we can pass the player object to the callback
         listen_pin.when_activated = lambda : listen_pin_activate(player=player)
