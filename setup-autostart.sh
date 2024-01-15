@@ -29,9 +29,19 @@ if [ ! -f "$playerAutostartCommandFileTemplate" ]; then
     exit 1
 fi
 
+# if originalUser is root, exit
+if [ "$SUDO_USER" = "root" ]; then
+    echo "You didn't use sudo, but were running as root. I'm confused. Exiting."
+    exit 1
+fi
+
+# Find original user's home folder
+originalUserHome=$(eval echo "~$SUDO_USER")
+
+
 # Replace the tilde in the player autostart command file with the home directory
 d=$'\03'
-sed "s${d}\~${d}$HOME$d" < "$playerAutostartCommandFileTemplate" > "$playerAutostartCommandFile"
+sed "s${d}\~${d}$originalUserHome$d" < "$playerAutostartCommandFileTemplate" > "$playerAutostartCommandFile"
 
 
 # Check if the modified player autostart command file exists
