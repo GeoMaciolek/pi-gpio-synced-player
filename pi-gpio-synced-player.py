@@ -129,7 +129,7 @@ def gpio_setup_transmit_pins(transmit_pin_ids, do_initialization_pulse = True,
     # Set up the pins for the main/secondary communication
     transmit_pins = []
     if not TEST_MODE_FAKE_GPIO:
-        dprint(f"Setting up transmit pins as list of gpiozero.DigitalOutputDevice()")
+        dprint(f"Setting up transmit pins [list of gpiozero.DigitalOutputDevice()]")
         for pin_id in transmit_pin_ids:
             new_pin = DigitalOutputDevice(pin=pin_id)
             transmit_pins.append(new_pin)
@@ -149,18 +149,18 @@ def gpio_setup_transmit_pins(transmit_pin_ids, do_initialization_pulse = True,
 
 
 def gpio_send_pin_high(transmit_pins: list):
+    dprint(f"Setting transmit pins to HIGH/on")
     if not TEST_MODE_FAKE_GPIO:
         for pin in transmit_pins:
-            dprint(f"Set pin {pin} to HIGH/on")
             pin.on()
     else:
         dprint("[TEST MODE] We would be setting the GPIO pins high.")
 
 
 def gpio_send_pin_low(transmit_pins: list):
+    dprint(f"Setting transmit pins to LOW/off")
     if not TEST_MODE_FAKE_GPIO:
         for pin in transmit_pins:
-            dprint("Setting pin {pin} to LOW/off")
             pin.off()
     else:
         dprint("[TEST MODE] We would be setting the GPIO pins low.")
