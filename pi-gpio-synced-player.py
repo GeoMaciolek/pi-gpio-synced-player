@@ -115,7 +115,17 @@ def vid_quit(vlc_player, instance):
 
     dprint('Player and Instance have been released; exiting vid_quit()')
 
-def gpio_setup_transmit_pins(transmit_pin_ids) -> list:
+def gpio_setup_transmit_pins(transmit_pin_ids, do_initialization_pulse = True,
+                            init_pulse_len = 0.5, init_delay = 2) -> list:
+    """
+    do_initialization_pulse = do we want to do a quick playback-transmit cycle
+        during initialization, for caching purposes etc?
+        ** Note - this is needed due to some GPIO issue causing the initial
+        ** "high" event to be detected as a "low" event on the secondaries!)
+
+    init_pulse_len = how many seconds to hold the tx pins high during init
+    init_delay =     how many seconds to wait after setting off again to continue 
+    """
     # Set up the pins for the main/secondary communication
     transmit_pins = []
     if not TEST_MODE_FAKE_GPIO:
@@ -123,6 +133,18 @@ def gpio_setup_transmit_pins(transmit_pin_ids) -> list:
         for pin_id in transmit_pin_ids:
             new_pin = DigitalOutputDevice(pin=pin_id)
             transmit_pins.append(new_pin)
+            if do_initialization_pulse:
+                new_pin.on()
+        if do_initialization_pulse:
+            time.sleep(init_pulse_len)
+        for pin_id in transmit_pin_ids:
+            new_pin = DigitalOutputDevice(pin=pin_id)
+            transmit_pins.append(new_pin)
+            if do_initialization_pulse:
+                new_pin.off()
+        if do_initialization_pulse:
+            time.sleep(init_delay)
+
     else:
         dprint("[TEST MODE] - We would be setting up all transmit pins")
         transmit_pins = [1,2,3]
