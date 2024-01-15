@@ -3,6 +3,8 @@
 autostartFile="/etc/xdg/lxsession/LXDE-pi/autostart"
 playerAutostartCommandFile=lxde-autostart
 
+playerAutostartCommandFileTemplate="$playerAutostartCommandFile-template"
+
 # exit if not running as root
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root. Exiting." 
@@ -22,19 +24,28 @@ if grep -q "pi-gpio-synced-player" "$autostartFile"; then
 fi
 
 # Check if the player autostart command file exists
-if [ ! -f "$playerAutostartCommandFile" ]; then
+if [ ! -f "$playerAutostartCommandFileTemplate" ]; then
     echo "Player autostart command file not found. Exiting."
     exit 1
 fi
 
-
 # Replace the tilde in the player autostart command file with the home directory
 d=$'\03'
-sed "s${d}\~${d}$HOME$d" < lxde-autostart-template > lxde-autostart
+sed "s${d}\~${d}$HOME$d" < "$playerAutostartCommandFileTemplate" > "$playerAutostartCommandFile"
+
+
+# Check if the modified player autostart command file exists
+if [ ! -f "$playerAutostartCommandFile" ]; then
+    echo "(Generated) player autostart command file not found. Exiting."
+    exit 1
+fi
+
 
 # Copy the player autostart command file to the autostart file
 echo "Adding player autostart command to autostart file."
 cat "$playerAutostartCommandFile" >> "$autostartFile"
+
+
 
 # Check if the player autostart command was added to the autostart file
 if grep -q "pi-gpio-synced-player" "$autostartFile"; then
