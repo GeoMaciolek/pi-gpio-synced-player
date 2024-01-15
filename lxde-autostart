@@ -1,1 +1,1 @@
-@lxterminal -l -e '~/Downloads/pi-gpio-synced-player/playback-wrapper.sh; bash'
+@~/Downloads/pi-gpio-synced-player/lxterm-wrapper.sh
