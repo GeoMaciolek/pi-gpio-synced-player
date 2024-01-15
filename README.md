@@ -32,8 +32,17 @@ uses system-wide package installation.
 ```bash
 sudo apt update
 sudo apt install vlc
+sudo apt install python3-vlc
+```
+
+Note: on older (?) versions of raspbian, you may get an error about
+`python3-vlc` not being installed. In that case (and **only** in that case),
+run the following:
+
+```bash
 sudo pip3 install python-vlc
 ```
+
 
 Copy the `pi-gpio-synced-player.example.conf` file to `pi-gpio-synced-player.conf`
 and edit it to match your setup. (The most important lines are `MediaFile` and `PlayerMode`)
@@ -46,6 +55,19 @@ Get up a terminal on each Pi, and clone the repo:
 cd ~/Downloads
 git clone https://github.com/GeoMaciolek/pi-gpio-synced-player.git
 ```
+
+#### Autostart
+
+To have the script run automatically on boot:
+
+```bash
+cd ~/Downlods/pi-gpio-synced-player
+sudo ./setup-autostart.sh
+```
+
+(This will add the needed lines from `lxde-autostart-template` to the system-wide
+`/etc/xdg/lxsession/LXDE-pi/autostart` file.)
+
 #### Running
 
 To launch the player, you can either run the script directly:
@@ -61,17 +83,6 @@ Or, you may use the wrapper script - included for auto-launch purposes.
 cd ~/Downloads/pi-gpio-synced-player
 ./playback-wrapper.sh
 ```
-#### Autostart
-
-To have the script run automatically on boot:
-
-```bash
-cd ~/Downlods/pi-gpio-synced-player
-sudo ./setup-autostart.sh
-```
-
-(This will add the needed lines from `lxde-autostart` to the system-wide
-`/etc/xdg/lxsession/LXDE-pi/autostart` file.)
 
 ## How It Works
 
