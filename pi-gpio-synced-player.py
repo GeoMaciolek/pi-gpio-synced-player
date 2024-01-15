@@ -266,7 +266,7 @@ def player_pause(player: vlc.MediaPlayer):
         dprint(f'Player is not playing (State: {player.get_state()}), skipping pause command.')
         return
     dprint('Pausing playback.')
-    player_pause(player=player)
+    player.pause()
     dprint('(Pause function complete)')
 
 def player_prepare_to_restart(player: vlc.MediaPlayer):
