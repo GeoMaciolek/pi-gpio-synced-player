@@ -48,6 +48,8 @@ echo "Creating wrapper script: $autostartSciptLocation"
 echo "      $wrapperCommand"
 echo "$wrapperCommand" > "$autostartSciptLocation"
 
+chmod +x "$autostartSciptLocation"
+
 
 ############################################################
 ### Raspberry Pi OS 11 (Bullseye) version (LXDE / lxsession)
