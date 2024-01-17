@@ -2,6 +2,11 @@
 
 autostartWrapperScript="lxterm-wrapper.sh"
 playbackWrapperScript="playback-wrapper.sh"
+
+# Specify the path to the desktop folder, if youd 'like a symbolic link to launch
+# the wrapper script to be placed on the desktop
+desktopPath="$HOME/Desktop"
+
 # OS Specific files
 lxdeAutostartFile="/etc/xdg/lxsession/LXDE-pi/autostart"
 
@@ -15,6 +20,21 @@ autostartWrapperScriptLocation="$PWD/$autostartWrapperScript"
 playbackWrapperScriptLocation="$PWD/$playbackWrapperScript"
 
 failMsg='Autostart setup FAILED.'
+
+# If the desktop path is specified, check if the desktop path exists
+if [ -n "$desktopPath" ]; then
+    if [ ! -d "$desktopPath" ]; then
+        echo "Desktop path specified, but \"$desktopPath\" not found; not adding link to desktop."
+    else
+        # Check if the desktop link already exists
+        if [ -f "$desktopPath/$autostartWrapperScript" ]; then
+            echo "Desktop link already exists: $desktopPath/$autostartWrapperScript"
+        else
+            echo "Creating desktop link: $desktopPath/$autostartWrapperScript"
+            ln -s "$autostartWrapperScriptLocation" "$desktopPath/$autostartWrapperScript"
+        fi
+    fi
+fi
 
 # Identify suppurted Raspbian versions
 case $(cat /etc/debian_version) in

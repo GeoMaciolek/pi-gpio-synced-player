@@ -78,12 +78,7 @@ cd ~/Downloads/pi-gpio-synced-player
 python3 pi-gpio-synced-player.py
 ```
 
-Or, you may use the wrapper script - included for auto-launch purposes.
-    
-```bash
-cd ~/Downloads/pi-gpio-synced-player
-./playback-wrapper.sh
-```
+(Or, if you followed the [autostart](#autostart) instructions above, you may just reboot the Pi)
 
 ## How It Works
 
