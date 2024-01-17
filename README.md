@@ -17,7 +17,7 @@ control), with simple GPIO communications to ensure players start in sync.
 
 ## Wiring
 
-![Pi 3B GPIO Pinout](pinout.png)
+![Pi 3B GPIO Pinout](assorted-resources/pinout.png)
 
 ## Usage
 
