@@ -6,9 +6,8 @@ waitTime=30
 # Run the player twice (with a 10 second delay between) to work around the "fullscreen issue?"
 briefInitialPlayback=true
 # How long to wait during the above initial playback phase - happens 3x?
-sleepTime=3
-playerCommand="sleep 200"
-# playerCommand="python pi-gpio-synced-player.py"
+sleepTime=8
+playerCommand="python pi-gpio-synced-player.py"
 
 echo -e "
                            [ Playback starts in $waitTime seconds. ]
@@ -41,31 +40,14 @@ if [ "$briefInitialPlayback" = true ]; then
     cd "$playerLocation" || exit 1
     eval "$playerCommand" &
     playerPid="$!"
-    echo "Player launched (pid $playerPid), waiting 15 sec"
-    sleep 15
-    echo "Kill pid $playerPid:"
-    kill "$playerPid"
-    sleep 1
-    echo "Kill -9 pid $playerPid:"
-    kill -9 "$playerPid"
-    sleep 1
-    exit 1
-    # echo "Player launched (pid $playerPid), waiting $sleepTime sec"
-    # sleep "$sleepTime"
-    # echo "Killing pid $playerPid"
-    # kill "$playerPid"
-    # echo "Sleeping another $sleepTime sec"
-    # sleep "$sleepTime"
-    # echo "Killing player (kill -9 $playerPid)"
-    # kill -9 "$!"
-    # echo "Player terminated, waiting one last $sleepTime sec"
-    # sleep "$sleepTime"
-    # echo "..."
-    # sleep "$sleepTime"
-    # echo "..."
-    # sleep "$sleepTime"
-    # echo "..."
-    # sleep "$sleepTime"
+    echo "Player launched (pid $playerPid), waiting $sleepTime sec"
+    sleep "$sleepTime"
+    echo "Killing pid $playerPid (via pkill -f)"
+    pkill -f "$playerCommand"
+    echo "Sleeping another $sleepTime sec"
+    sleep "$sleepTime"
+    echo "Player terminated, waiting one last $sleepTime sec"
+    sleep "$sleepTime"
 fi
 
 echo -e "\nStarting player."
