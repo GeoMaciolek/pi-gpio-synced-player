@@ -444,7 +444,7 @@ else:
 # Initialize player (regardless of primary or secondary mode)
 player, instance, media, duration = player_launch(media_file=MEDIA_FILE,
                                                   set_playback_count=set_playback_count,
-                                                  toggle_fullscreen_during_init = conf['TOGGLE_FULLSCREEN'])
+                                                  toggle_fullscreen_during_init = conf['TOGGLE_FULLSCREEN_DURING_INIT'])
 
 dprint('Player init should be done')
 
