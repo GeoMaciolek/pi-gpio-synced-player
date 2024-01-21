@@ -196,7 +196,7 @@ def player_launch(media_file:str,
     Returns:
         (vlc.MediaPlayer, vlc.Instance, vlc.Media, duration [int]): a tuple of the player, instance, and media
     """
-    dprint('Intializing VLC instance, player, and media, and loading media')
+    dprint('Initializing VLC instance, player, and media, and loading media')
     try:
 
         # creating a vlc instance - with a LONG repeat number

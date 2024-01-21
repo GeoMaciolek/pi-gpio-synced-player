@@ -43,7 +43,6 @@ run the following:
 sudo pip3 install python-vlc
 ```
 
-
 Copy the `pi-gpio-synced-player.example.conf` file to `pi-gpio-synced-player.conf`
 and edit it to match your setup. (The most important lines are `MediaFile` and `PlayerMode`)
 
@@ -62,7 +61,7 @@ To have the script run automatically on boot:
 (note - on Debian 11, you will be prompted for your password)
 
 ```bash
-cd ~/Downlods/pi-gpio-synced-player
+cd ~/Downloads/pi-gpio-synced-player
 ./setup-autostart.sh
 ```
 
