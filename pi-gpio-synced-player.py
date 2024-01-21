@@ -183,13 +183,15 @@ def gpio_setup_listen_pin(listen_pin_number: int, player: vlc.MediaPlayer):
 
 def player_launch(media_file:str,
                   set_playback_count=1,
-                  toggle_fullscreen_during_init: bool = False) -> (vlc.MediaPlayer, vlc.Instance, vlc.Media):
+                  toggle_fullscreen_during_init: bool = False,
+                  play_briefly_fullscreen_workaround: bool = False) -> (vlc.MediaPlayer, vlc.Instance, vlc.Media):
     """launch the media player
 
     Args:
         media_file (str): The file to play.
         set_playback_count (int, optional): The number of times to play the media. Defaults to 1.
         toggle_fullscreen_during_init (bool, optional): Toggle fullscreen mode during initialization? Defaults to False.
+        play_briefly_fullscreen_workaround (bool, optional): Play briefly in fullscreen mode during initialization? Defaults to False.
 
     Returns:
         (vlc.MediaPlayer, vlc.Instance, vlc.Media, duration [int]): a tuple of the player, instance, and media
@@ -213,6 +215,19 @@ def player_launch(media_file:str,
     
     if FULLSCREEN_MODE:
         vlc_player.set_fullscreen(1)
+        if play_briefly_fullscreen_workaround:
+            dprint('Playing briefly (play_briefly_fullscreen_workaround=True)')
+            vlc_player.play()
+            time.sleep(PLAYBACK_AFTER_LOAD_DURATION_SEC)
+            vlc_player.stop()
+            time.sleep(PLAYBACK_AFTER_LOAD_DURATION_SEC)
+            vid_quit(vlc_player=vlc_player, instance=vlc_instance)
+            time.sleep(PLAYBACK_AFTER_LOAD_DURATION_SEC)
+            dprint('Done playing briefly & cleaning up, calling init again.')
+            player_launch(media_file=media_file,
+                        set_playback_count=set_playback_count,
+                        toggle_fullscreen_during_init = toggle_fullscreen_during_init,
+                        play_briefly_fullscreen_workaround = False)
 
     # Play a little bit to get the duratioN!    
     dprint('Playing briefly, to get video duration.')
@@ -389,6 +404,7 @@ conf = {
     # Advanced
     'PLAYBACK_AFTER_LOAD_DURATION_SEC': config_parsed.getfloat('Advanced', 'PlaybackAfterLoadDurationSec', fallback=PLAYBACK_AFTER_LOAD_DURATION_SEC_DEFAULT),
     'TOGGLE_FULLSCREEN_DURING_INIT': config_parsed.getboolean('Advanced', 'ToggleFullscreenDuringInit', fallback=False),
+    'PLAY_BRIEFLY_FULLSCREEN_WORKAROUND': config_parsed.getboolean('Advanced', 'PlayBrieflyFullscreenWorkaround', fallback=False),
 
     # Debug
     'TEST_MODE_FAKE_GPIO': config_parsed.getboolean('Debug', 'FakeGPIO', fallback=TEST_MODE_FAKE_GPIO_DEFAULT),
@@ -444,7 +460,8 @@ else:
 # Initialize player (regardless of primary or secondary mode)
 player, instance, media, duration = player_launch(media_file=MEDIA_FILE,
                                                   set_playback_count=set_playback_count,
-                                                  toggle_fullscreen_during_init = conf['TOGGLE_FULLSCREEN_DURING_INIT'])
+                                                  toggle_fullscreen_during_init = conf['TOGGLE_FULLSCREEN_DURING_INIT'],
+                                                  play_briefly_fullscreen_workaround = conf['PLAY_BRIEFLY_FULLSCREEN_WORKAROUND'])
 
 dprint('Player init should be done')
 
