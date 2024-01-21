@@ -5,6 +5,8 @@ playerLocation="$HOME/Downloads/pi-gpio-synced-player"
 waitTime=30
 # Run the player twice (with a 10 second delay between) to work around the "fullscreen issue?"
 briefInitialPlayback=true
+# How long to wait during the above initial playback phase - happens 3x?
+sleepTime=7
 playerCommand="python pi-gpio-synced-player.py"
 
 echo -e "
@@ -32,16 +34,18 @@ if [[ $input = "q" ]] || [[ $input = "Q" ]]; then
     exit 0
 fi
 
-# Launches the player in the background, waits 10 seconds, terminates it, continues
+# Launches the player in the background, waits X seconds, terminates it, continues
 if [ "$briefInitialPlayback" = true ]; then
     echo -e "\nStarting player (temporary/brief)."
     cd "$playerLocation" || exit 1
     eval "$playerCommand" &
     echo "Player launched, waiting"
-    sleep 10
+    sleep "$sleepTime"
     kill "$!"
+    sleep "$sleepTime"
+    kill -9 "$!"
     echo "Player terminated, waiting"
-    sleep 10
+    sleep "$sleepTime"
 fi
 
 echo -e "\nStarting player."
